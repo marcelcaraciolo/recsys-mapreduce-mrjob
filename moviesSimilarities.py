@@ -26,8 +26,8 @@ class MoviesSimilarities(MRJob):
     def steps(self):
         return [self.mr(self.group_by_user_rating,
                          self.count_ratings_users_freq),
-                self.mr(self.pairwise_items,
-                    self.calculate_similarity)
+                self.mr(self.pairwise_items, self.calculate_similarity),
+                self.mr(self.calculate_ranking, self.top_similar_items)
                 ]
 
     def group_by_user_rating(self, key, line):
@@ -38,7 +38,7 @@ class MoviesSimilarities(MRJob):
         user_id, item_id, rating = line.split('|')
         #yield (item_id, int(rating)), user_id
         #yield item_id, (user_id, int(rating))
-        yield  user_id, (item_id, int(rating))
+        yield  user_id, (item_id, float(rating))
         #yield (user_id, item_id), int(rating)
 
     def count_ratings_users_freq(self, user_id, values):
@@ -72,7 +72,20 @@ class MoviesSimilarities(MRJob):
             sum_x += item_x
             n += 1
         similarity = correlation(n, sum_xy, sum_x, sum_y, sum_xx, sum_yy)
-        yield (item_x, item_y), (similarity, n)
+        yield (item_xname, item_yname), (similarity, n)
+
+    def calculate_ranking(self, item_keys, values):
+        similarity, n = values
+        item_x, item_y = item_keys
+        if int(n) > 0:
+            yield (item_x, similarity), (item_y, n)
+
+    def top_similar_items(self, key_sim, similar_ns):
+        print key_sim
+        for x in similar_ns:
+            print x
+        print '----'
+
 
 if __name__ == '__main__':
     MoviesSimilarities.run()

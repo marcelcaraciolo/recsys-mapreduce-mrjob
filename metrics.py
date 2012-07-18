@@ -22,7 +22,7 @@ def correlation(size, dot_product, rating_sum, \
     denominator = sqrt(size * rating_norm_squared - rating_sum * rating_sum) * \
                     sqrt(size * rating2_norm_squared - rating2sum * rating2sum)
 
-    return numerator / float(denominator)
+    return (numerator / (float(denominator))) if denominator else 0.0
 
 
 def combinations(iterable, r):
