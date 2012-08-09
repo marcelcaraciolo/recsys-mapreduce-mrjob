@@ -14,7 +14,7 @@
 __author__ = 'Marcel Caraciolo <caraciol@gmail.com>'
 
 from mrjob.job import MRJob
-from metrics import correlation
+from metrics import correlation, normalized_correlation
 try:
     from itertools import combinations
 except ImportError:
@@ -71,7 +71,8 @@ class MoviesSimilarities(MRJob):
             sum_y += item_y
             sum_x += item_x
             n += 1
-        similarity = correlation(n, sum_xy, sum_x, sum_y, sum_xx, sum_yy)
+        similarity = normalized_correlation(n, sum_xy, sum_x, sum_y, \
+                sum_xx, sum_yy)
         yield (item_xname, item_yname), (similarity, n)
 
     def calculate_ranking(self, item_keys, values):
@@ -81,11 +82,9 @@ class MoviesSimilarities(MRJob):
             yield (item_x, similarity), (item_y, n)
 
     def top_similar_items(self, key_sim, similar_ns):
-        print key_sim
-        for x in similar_ns:
-            print x
-        print '----'
-
+        item_x, similarity = key_sim
+        for item_y, n in similar_ns:
+            print '%s;%s;%f;%d' % (item_x, item_y, similarity, n)
 
 if __name__ == '__main__':
     MoviesSimilarities.run()

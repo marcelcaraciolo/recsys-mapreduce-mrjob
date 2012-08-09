@@ -25,6 +25,20 @@ def correlation(size, dot_product, rating_sum, \
     return (numerator / (float(denominator))) if denominator else 0.0
 
 
+def normalized_correlation(size, dot_product, rating_sum, \
+            rating2sum, rating_norm_squared, rating2_norm_squared):
+    '''
+      The correlation between two vectors A, B is
+      cov(A, B) / (stdDev(A) * stdDev(B))
+      The normalization is to give the scale between [0,1].
+
+    '''
+    similarity = correlation(size, dot_product, rating_sum, \
+            rating2sum, rating_norm_squared, rating2_norm_squared)
+
+    return (similarity + 1.0) / 2.0
+
+
 def combinations(iterable, r):
     """
     Implementation of itertools combinations method. Re-implemented here because
