@@ -1,0 +1,1 @@
+python Documents/Projects/articles/mapreduce/moviesSimilarities.py Documents/Projects/articles/mapreduce/sampling.csv  --python-archive Documents/Projects/articles/mapreduce/metrics.tar.gz   > similarities.dat
