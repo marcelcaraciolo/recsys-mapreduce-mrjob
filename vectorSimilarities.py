@@ -64,15 +64,26 @@ MAX_NUM_RATERS = 10000
 MIN_INTERSECTION = 0
 
 
+class SemicolonValueProtocol(object):
+
+    # don't need to implement read() since we aren't using it
+
+    def write(self, key, values):
+        return ';'.join(str(v) for v in values)
+
+
 class VectorSimilarities(MRJob):
 
+    OUTPUT_PROTOCOL = SemicolonValueProtocol
+
     def steps(self):
-        return [self.mr(self.input,
-                         self.group_by_user_rating),
-                self.mr(None, self.count_ratings_users_freq),
-                self.mr(self.pairwise_items, self.calculate_similarity),
-                self.mr(self.calculate_ranking, self.top_similar_items)
-                ]
+        return [
+            self.mr(mapper=self.input, reducer=self.group_by_user_rating),
+            self.mr(reducer=self.count_ratings_users_freq),
+            self.mr(mapper=self.pairwise_items,
+                    reducer=self.calculate_similarity),
+            self.mr(mapper=self.calculate_ranking,
+                    reducer=self.top_similar_items)]
 
     def configure_options(self):
         super(VectorSimilarities, self).configure_options()
@@ -243,8 +254,8 @@ class VectorSimilarities(MRJob):
         '''
         item_x, corr_sim, cos_sim, reg_corr_sim, jaccard_sim = key_sim
         for item_y, n in similar_ns:
-            yield '%s;%s;%f;%f;%f;%f;%d' % (item_x, item_y, corr_sim, cos_sim,
-                    reg_corr_sim, jaccard_sim, n), None
+            yield None, (item_x, item_y, corr_sim, cos_sim, reg_corr_sim,
+                         jaccard_sim, n)
 
 
 def correlation(size, dot_product, rating_sum, \
