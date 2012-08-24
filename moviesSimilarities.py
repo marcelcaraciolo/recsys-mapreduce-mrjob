@@ -15,7 +15,7 @@ __author__ = 'Marcel Caraciolo <caraciol@gmail.com>'
 
 from mrjob.job import MRJob
 from metrics import  correlation
-from metrics import jaccard, cosine, regularized_correlation
+from metrics import cosine, regularized_correlation
 from math import sqrt
 
 try:
@@ -28,14 +28,26 @@ PRIOR_COUNT = 10
 PRIOR_CORRELATION = 0
 
 
+class SemicolonValueProtocol(object):
+
+    # don't need to implement read() since we aren't using it
+
+    def write(self, key, values):
+        return ';'.join(str(v) for v in values)
+
+
 class MoviesSimilarities(MRJob):
 
+    OUTPUT_PROTOCOL = SemicolonValueProtocol
+
     def steps(self):
-        return [self.mr(self.group_by_user_rating,
-                         self.count_ratings_users_freq),
-                self.mr(self.pairwise_items, self.calculate_similarity),
-                self.mr(self.calculate_ranking, self.top_similar_items)
-                ]
+        return [
+            self.mr(mapper=self.group_by_user_rating,
+                    reducer=self.count_ratings_users_freq),
+            self.mr(mapper=self.pairwise_items,
+                    reducer=self.calculate_similarity),
+            self.mr(mapper=self.calculate_ranking,
+                    reducer=self.top_similar_items)]
 
     def group_by_user_rating(self, key, line):
         """
@@ -168,8 +180,9 @@ class MoviesSimilarities(MRJob):
         '''
         item_x, corr_sim, cos_sim, reg_corr_sim, jaccard_sim = key_sim
         for item_y, n in similar_ns:
-            print '%s;%s;%f;%f;%f;%f;%d' % (item_x, item_y, corr_sim, cos_sim,
-                    reg_corr_sim, jaccard_sim, n)
+            yield None, (item_x, item_y, corr_sim, cos_sim, reg_corr_sim,
+                         jaccard_sim, n)
+
 
 if __name__ == '__main__':
     MoviesSimilarities.run()
